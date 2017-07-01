@@ -5,36 +5,30 @@ import java.util.List;
 
 import org.craftedsw.tripservicekata.exception.UserNotLoggedInException;
 import org.craftedsw.tripservicekata.user.User;
-import org.craftedsw.tripservicekata.user.UserSession;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class TripService {
+	
+	@Autowired
+	private TripDAO tripDAO;
+	
+	public List<Trip> getTripsByUser(User user, User loggedUser) throws UserNotLoggedInException {
+		validateLoggedInUserIsNotNull(loggedUser);
+		
+		return user.isFriendWith(loggedUser) 
+				? tripsBy(user) 
+				: new ArrayList<Trip>();
+	}
 
-	public List<Trip> getTripsByUser(User user) throws UserNotLoggedInException {
-		List<Trip> tripList = new ArrayList<Trip>();
-		User loggedUser = getLoggedInUser();
-		boolean isFriend = false;
-		if (loggedUser != null) {
-			for (User friend : user.getFriends()) {
-				if (friend.equals(loggedUser)) {
-					isFriend = true;
-					break;
-				}
-			}
-			if (isFriend) {
-				tripList = tripsBy(user);
-			}
-			return tripList;
-		} else {
+	private void validateLoggedInUserIsNotNull(User loggedInUser) throws UserNotLoggedInException
+	{
+		if (loggedInUser == null)
+		{
 			throw new UserNotLoggedInException();
 		}
 	}
 
-	protected List<Trip> tripsBy(User user) {
-		return TripDAO.findTripsByUser(user);
+	private List<Trip> tripsBy(User user) {
+		return tripDAO.tripsBy(user);
 	}
-
-	protected User getLoggedInUser() {
-		return UserSession.getInstance().getLoggedUser();
-	}
-	
 }
